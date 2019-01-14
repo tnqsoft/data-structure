@@ -9,6 +9,8 @@ import 'codemirror/addon/search/search';
 import 'codemirror/addon/scroll/annotatescrollbar';
 import 'codemirror/addon/search/matchesonscrollbar';
 import 'codemirror/addon/selection/active-line';
+import { FormGroup, FormControl, Validators } from '@angular/forms';
+import { PolishNotationAlgorithm } from 'src/app/shared/data-structure/algorithms/polish-notation.algorithm';
 
 @Component({
   selector: 'app-polish-notation',
@@ -43,9 +45,27 @@ export class AlgorithmPolishNotationComponent implements OnInit {
   echo "Hello world!";
   `;
 
+  form: FormGroup;
+  isFormCheck = false;
+  convertPrefixResult = '';
+  convertPostResult = '';
+
   constructor() {}
 
   ngOnInit() {
+    this.form = new FormGroup({
+      expressInfix: new FormControl('', Validators.required),
+    });
+  }
+
+  public convert(): void {
+    this.isFormCheck = true;
+    if (this.form.valid) {
+      const infix = this.form.controls['expressInfix'].value;
+      const polishNotationAlgorithm: PolishNotationAlgorithm = new PolishNotationAlgorithm(infix);
+      this.convertPrefixResult = polishNotationAlgorithm.getPrefix(true);
+      this.convertPostResult = polishNotationAlgorithm.getPostfix(true);
+    }
   }
 
   public getCodemirrorConfig(lang: string) {

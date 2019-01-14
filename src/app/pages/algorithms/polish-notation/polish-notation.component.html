@@ -1,11 +1,41 @@
-<p class="lead">Polish Notation</p>
+<h3>Polish Notation</h3>
 
-<h4>Typescript</h4>
-<div class="code-block">
-  <ngx-codemirror [(ngModel)]="jsContent" [options]="getCodemirrorConfig('text/typescript')">{{ jsContent }}</ngx-codemirror>
+<h4>Theory</h4>
+
+<h4>Demo</h4>
+<div class="row">
+  <div class="col-6">
+    <form [formGroup]="form">
+      <div class="form-row">
+        <div class="col-md-6 mb-3">
+          <textarea class="form-control" placeholder="Enter Infix Express" name="expressInfix" formControlName="expressInfix"
+            [ngClass]="{ 'is-invalid': isFormCheck && form.controls['expressInfix'].invalid }"></textarea>
+          <div class="invalid-feedback">
+            Express invalid
+          </div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary" (click)="convert()">Convert</button>
+    </form>
+  </div>
+  <div class="col-6">
+    <div *ngIf="convertPostResult">
+      Postfix:
+      <code>{{ convertPostResult }}</code>
+    </div>
+    <div *ngIf="convertPrefixResult">
+      Prefix:
+      <code>{{ convertPrefixResult }}</code>
+    </div>
+  </div>
 </div>
 
-<h4>PHP</h4>
-<div class="code-block">
-  <ngx-codemirror [(ngModel)]="contentPhp" [options]="getCodemirrorConfig('php')">{{ contentPhp }}</ngx-codemirror>
-</div>
+<h4>Source Code</h4>
+<tabset>
+  <tab heading="Typescript">
+    <ngx-codemirror [(ngModel)]="jsContent" [options]="getCodemirrorConfig('text/typescript')">{{ jsContent }}</ngx-codemirror>
+  </tab>
+  <tab heading="PHP">
+    <ngx-codemirror [(ngModel)]="contentPhp" [options]="getCodemirrorConfig('php')">{{ contentPhp }}</ngx-codemirror>
+  </tab>
+</tabset>
