@@ -11,6 +11,8 @@ import 'codemirror/addon/search/matchesonscrollbar';
 import 'codemirror/addon/selection/active-line';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { PolishNotationAlgorithm } from 'src/app/shared/data-structure/algorithms/polish-notation.algorithm';
+import { StackHistoryUtility } from 'src/app/shared/data-structure/utility/stack-history.utility';
+import { expressionValidator } from 'src/app/shared/directives/expression-validator.directive';
 
 @Component({
   selector: 'app-polish-notation',
@@ -19,43 +21,33 @@ import { PolishNotationAlgorithm } from 'src/app/shared/data-structure/algorithm
 })
 export class AlgorithmPolishNotationComponent implements OnInit {
 
-  public jsContent = `class Greeter {
-    greeting: string;
-    constructor (message: string) {
-      this.greeting = message;
-    }
-    greet() {
-      return "Hello, " + this.greeting;
-    }
-  }
+  public jsContent: string;
 
-  var greeter = new Greeter("world");
+  public contentPhp: string;
+  public exampleData = '((15 ÷ (7 − (1 + 1))) × 3) − (2 + (1 + 1))';
 
-  var button = document.createElement('button')
-  button.innerText = "Say Hello"
-  button.onclick = function() {
-    alert(greeter.greet())
-  }
-
-  document.body.appendChild(button)
-
-  `;
-
-  public contentPhp = `<?php
-  echo "Hello world!";
-  `;
-
-  form: FormGroup;
-  isFormCheck = false;
-  convertPrefixResult = '';
-  convertPostResult = '';
+  public form: FormGroup;
+  public isFormCheck = false;
+  public convertPrefixResult = '';
+  public convertPostResult = '';
+  public prefixHistory: StackHistoryUtility = new StackHistoryUtility('');
+  public postHistory: StackHistoryUtility = new StackHistoryUtility('');
+  public prefixResult: number;
+  public postResult: number;
 
   constructor() {}
 
   ngOnInit() {
     this.form = new FormGroup({
-      expressInfix: new FormControl('', Validators.required),
+      expressInfix: new FormControl(this.exampleData, [Validators.required, expressionValidator()]),
     });
+    this.form.valueChanges.subscribe(
+      result => {
+        this.convertPrefixResult = '';
+        this.convertPostResult = '';
+        this.prefixHistory = null;
+      }
+    );
   }
 
   public convert(): void {
@@ -64,8 +56,21 @@ export class AlgorithmPolishNotationComponent implements OnInit {
       const infix = this.form.controls['expressInfix'].value;
       const polishNotationAlgorithm: PolishNotationAlgorithm = new PolishNotationAlgorithm(infix);
       this.convertPrefixResult = polishNotationAlgorithm.getPrefix(true);
+      this.prefixHistory = polishNotationAlgorithm.getHistory();
       this.convertPostResult = polishNotationAlgorithm.getPostfix(true);
+      this.postHistory = polishNotationAlgorithm.getHistory();
     }
+  }
+
+  public clear(): void {
+    this.form.controls['expressInfix'].setValue('');
+    this.convertPrefixResult = '';
+    this.convertPostResult = '';
+    this.prefixHistory = null;
+  }
+
+  public addExample(): void {
+    this.form.controls['expressInfix'].setValue(this.exampleData);
   }
 
   public getCodemirrorConfig(lang: string) {

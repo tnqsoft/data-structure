@@ -1,5 +1,6 @@
 import * as _ from 'lodash';
 import { Util } from '../utility/util.utility';
+import { StackHistoryUtility } from '../utility/stack-history.utility';
 
 /**
  * Implement Poish Nonation Utilitiy
@@ -9,13 +10,15 @@ import { Util } from '../utility/util.utility';
  */
 export class PolishNotationAlgorithm {
 
-  public PATTERN_VALID_INFIX        = '^(?:[0-9a-zA-Z]|\\s|\\+|\\-|\\*|\\/|\\^|\\(|\\))+$';
-  public PATTERN_VALID_OPERATOR     = '^(?:\\+|\\-|\\*|\\/|\\^)$';
+  public PATTERN_VALID_INFIX        = '^(?:[0-9a-zA-Z]|\\s|\\+|\\-|\\−|\\*|\\×|\\/|\\÷|\\^|\\(|\\))+$';
+  public PATTERN_VALID_OPERATOR     = '^(?:\\+|\\-|\\−|\\*|\\×|\\/|\\÷|\\^)$';
   public PATTERN_VALID_OPERAND      = '^(?:[0-9a-zA-Z]+)$';
   public PATTERN_PRE_FORMAT_LEVEL1  = '(?:\\r\\n|\\r|\\n|\\s)';
-  public PATTERN_PRE_FORMAT_LEVEL2  = '(\\+|\\-|\\*|\\/|\\^|\\)|\\()';
+  public PATTERN_PRE_FORMAT_LEVEL2  = '(\\+|\\-|\\−|\\*|\\×|\\/|\\÷|\\^|\\)|\\()';
 
   private infixToken: Array<string> = [];
+
+  private stepHistory: StackHistoryUtility;
 
   constructor(expression: string) {
     this.infixToken = this.string2Token(expression);
@@ -51,75 +54,144 @@ export class PolishNotationAlgorithm {
     return prefixToken;
   }
 
+  public exePostfix(postfixToken: Array<any>): any {
+    const token: Array<any> = _.clone(postfixToken);
+    token.reverse();
+    return this.exePrefix(token);
+  }
+
+  public exePrefix(prefixToken: Array<any>): any {
+    const token: Array<any> = _.clone(prefixToken);
+    const tmpStack: Array<any> = [];
+    while (token.length > 0) {
+      const tmp: string = token.pop();
+      if (this.isOperand(tmp)) {
+        tmpStack.push(tmp);
+      } else {
+        const operand1 = tmpStack.pop();
+        const operand2 = tmpStack.pop();
+        tmpStack.push(this.exeExpress(operand1, operand2, tmp));
+      }
+    }
+    // Get latest result
+    return tmpStack.pop();
+  }
+
   public infix2Prefix(token: Array<string>): Array<string> {
     const output: Array<string> = [];
     const tmpStack: Array<string> = [];
+    // For Write Log
+    const logTrackingToken: Array<string> = _.clone(token);
+    this.initHistory(logTrackingToken);
     // Add Special Character To End
     tmpStack.push('#');
     token.reverse();
     for (let i = 0; i < token.length; i++) {
       const item: string = token[i];
+
+      // For Write Log
+      logTrackingToken.pop();
+
       if (this.isOperand(item)) {
         output.push(item);
+        // Write Log
+        this.addLog('Print', logTrackingToken, output, tmpStack);
       } else if (item === ')') {
         tmpStack.push(item);
+        // Write Log
+        this.addLog('Push', logTrackingToken, output, tmpStack);
       } else if (item === '(') {
         while (Util.getLast(tmpStack) !== ')') {
           output.push(tmpStack.pop());
+          // Write Log
+          this.addLog('Print', logTrackingToken, output, tmpStack);
         }
         tmpStack.pop();
+        // Write Log
+        this.addLog('Pop Until \')\'', logTrackingToken, output, tmpStack);
       } else {
         if (this.getPriority(item) >= this.getPriority(Util.getLast(tmpStack))) {
           tmpStack.push(item);
+          // Write Log
+          this.addLog('Push', logTrackingToken, output, tmpStack);
         } else {
           while (this.getPriority(item) <= this.getPriority(Util.getLast(tmpStack))) {
             output.push(tmpStack.pop());
+            // Write Log
+            this.addLog('Print', logTrackingToken, output, tmpStack);
           }
           tmpStack.push(item);
+          // Write Log
+          this.addLog('Push', logTrackingToken, output, tmpStack);
         }
       }
     }
     while (Util.getLast(tmpStack) !== '#') {
       output.push(tmpStack.pop());
     }
+    // Write Log
+    this.addLog('Pop Every element', logTrackingToken, output, tmpStack);
     output.reverse();
+    // Write Log
+    this.addLog('Reverse', logTrackingToken, output, tmpStack);
     return output;
   }
 
   public infix2Postfix(token: Array<string>): Array<string> {
     const output: Array<string> = [];
     const tmpStack: Array<string> = [];
+    // For Write Log
+    const logTrackingToken: Array<string> = _.clone(token).reverse();
+    this.initHistory(_.clone(logTrackingToken).reverse());
     // Add Special Character To End
     tmpStack.push('#');
     for (let i = 0; i < token.length; i++) {
       const item: string = token[i];
+
+      // For Write Log
+      logTrackingToken.pop();
+
       if (this.isOperand(item)) {
         output.push(item);
+        // Write Log
+        this.addLog('Print', _.clone(logTrackingToken).reverse(), output, tmpStack);
       } else if (item === '(') {
         tmpStack.push(item);
+        // Write Log
+        this.addLog('Push', _.clone(logTrackingToken).reverse(), output, tmpStack);
       } else if (item === ')') {
         while (Util.getLast(tmpStack) !== '(') {
           output.push(tmpStack.pop());
+          // Write Log
+          this.addLog('Print', _.clone(logTrackingToken).reverse(), output, tmpStack);
         }
         tmpStack.pop();
+        // Write Log
+        this.addLog('Pop Until \'(\'', _.clone(logTrackingToken).reverse(), output, tmpStack);
       } else {
         while (this.getPriority(item) <= this.getPriority(Util.getLast(tmpStack))) {
           output.push(tmpStack.pop());
+          // Write Log
+          this.addLog('Print', _.clone(logTrackingToken).reverse(), output, tmpStack);
         }
         tmpStack.push(item);
+        // Write Log
+        this.addLog('Push', _.clone(logTrackingToken).reverse(), output, tmpStack);
       }
     }
     while (Util.getLast(tmpStack) !== '#') {
       output.push(tmpStack.pop());
     }
+    // Write Log
+    this.addLog('Pop Every element', _.clone(logTrackingToken).reverse(), output, tmpStack);
     return output;
   }
 
   protected getPriority(operator: string): number {
     switch (operator) {
-      case '+': case '-':
+      case '+': case '-': case '−':
         return 1;
-      case '*': case '/':
+      case '*': case '×': case '/': case '÷':
         return 2;
       case '^':
         return 3;
@@ -154,11 +226,11 @@ export class PolishNotationAlgorithm {
     switch (operator) {
       case '+':
         return operand1 + operand2;
-      case '-':
+      case '-': case '−':
         return operand1 - operand2;
-      case '*':
+      case '*': case '×':
         return operand1 * operand2;
-      case '/':
+      case '/': case '÷':
         return operand1 / operand2;
       case '^':
         // tslint:disable-next-line:no-bitwise
@@ -206,4 +278,28 @@ export class PolishNotationAlgorithm {
     }
     return str.trim().split(/\s+/g);
   }
+
+  // ------------------------------------------------------------------------------
+
+  private initHistory(token: Array<string>): void {
+    this.stepHistory = new StackHistoryUtility(token.join(''));
+  }
+
+  private addLog(
+    comment: string,
+    token: Array<string>,
+    output: Array<string>,
+    stack: Array<string>
+  ): void {
+    this.stepHistory.addExpressionHistory(token.join(''));
+    this.stepHistory.addStackHistory(stack.join(''));
+    this.stepHistory.addOutputHistory(output.join(' '));
+    this.stepHistory.addCommentHistory(comment);
+  }
+
+  public getHistory(): StackHistoryUtility {
+    return this.stepHistory;
+  }
+
+  // ------------------------------------------------------------------------------
 }
