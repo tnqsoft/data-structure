@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AlgorithmsComponent } from './default/algorithms.component';
+import { AlgorithmsComponent } from './components/default/algorithms.component';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { RouterModule, Routes } from '@angular/router';
-import { AlgorithmsLayoutComponent } from './layout/algorithms-layout.component';
-import { AlgorithmPolishNotationComponent } from './polish-notation/polish-notation.component';
+import { AlgorithmsLayoutComponent } from './layout/layout.component';
+import { AlgorithmPolishNotationComponent } from './components/polish-notation/polish-notation.component';
 
 const routes: Routes = [
   {
